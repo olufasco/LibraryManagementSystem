@@ -1,0 +1,17 @@
+﻿@model IEnumerable<BorrowTransaction>
+
+<h2>My Borrowed Books</h2>
+
+<table class="table">
+    <thead><tr><th>Book</th><th>Date Borrowed</th><th>Date Returned</th></tr></thead>
+    <tbody>
+        @foreach (var t in Model)
+        {
+            <tr>
+                <td>@t.Book?.Title</td>
+                <td>@t.DateBorrowed.ToShortDateString()</td>
+                <td>@(t.DateReturned?.ToShortDateString() ?? "Not returned")</td>
+            </tr>
+        }
+    </tbody>
+</table>

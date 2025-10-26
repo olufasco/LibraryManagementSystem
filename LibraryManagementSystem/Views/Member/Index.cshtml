@@ -1,0 +1,18 @@
+﻿@model IEnumerable<Member>
+
+<h2>Members</h2>
+<a class="btn btn-primary" href="/Member/Create">Add Member</a>
+
+<table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Actions</th></tr></thead>
+    <tbody>
+        @foreach (var member in Model)
+        {
+            <tr>
+                <td>@member.Name</td>
+                <td>@member.Email</td>
+                <td><a href="/Member/Details/@member.Id">Details</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
