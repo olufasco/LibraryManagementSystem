@@ -16,6 +16,7 @@ namespace LibraryManagementSystem.Areas.Identity.Pages.Account
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<RegisterModel> _logger;
+        private IdentityUser user;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
@@ -85,6 +86,7 @@ namespace LibraryManagementSystem.Areas.Identity.Pages.Account
                         Email = Input.Email,
                         UserId = newUser.Id
                     });
+                    await _userManager.AddToRoleAsync(user, "Member");
 
                     await _signInManager.SignInAsync(newUser, isPersistent: false);
                     return LocalRedirect(returnUrl);

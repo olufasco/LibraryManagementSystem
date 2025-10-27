@@ -1,32 +1,51 @@
 ﻿using LibraryManagementSystem.Data;
+using LibraryManagementSystem.Interfaces;
+using LibraryManagementSystem.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
+// Razor Pages + MVC
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+// In-memory EF Core database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("LibraryDb"));
+
+// Identity with roles
+builder.Services.AddDefaultIdentity<IdentityUser>(options => {
+    options.SignIn.RequireConfirmedAccount = false;
+})
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Register services
 builder.Services.AddSingleton<IBookService, BookService>();
 builder.Services.AddSingleton<IMemberService, MemberService>();
 builder.Services.AddSingleton<ITransactionService, TransactionService>();
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddDefaultIdentity<IdentityUser>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
-
+builder.Services.AddScoped<IBorrowService, BorrowService>();
 var app = builder.Build();
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Middleware
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
+// Routing
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Book}/{action=Index}/{id?}");
 
 app.MapRazorPages();
+
+// Seed roles and admin account
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await DbInitializer.SeedRolesAndAdminAsync(services);
+}
+
 app.Run();

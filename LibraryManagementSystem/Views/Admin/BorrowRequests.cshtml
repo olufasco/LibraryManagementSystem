@@ -1,0 +1,26 @@
+﻿@model List<BorrowRequest>
+
+<h2>Pending Borrow Requests</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Book</th>
+            <th>Member</th>
+            <th>Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var request in Model)
+        {
+            <tr>
+                <td>@request.Book.Title</td>
+                <td>@request.Member.Email</td>
+                <td>@request.RequestDate.ToShortDateString()</td>
+                <td>
+                    <a class="btn btn-success" href="/Admin/Approve/@request.Id">Approve</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
