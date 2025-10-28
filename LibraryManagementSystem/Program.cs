@@ -40,12 +40,10 @@ app.MapControllerRoute(
     pattern: "{controller=Book}/{action=Index}/{id?}");
 
 app.MapRazorPages();
-
 // Seed roles and admin account
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     await DbInitializer.SeedRolesAndAdminAsync(services);
 }
-
 app.Run();
