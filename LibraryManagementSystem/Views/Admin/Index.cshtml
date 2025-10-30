@@ -1,0 +1,27 @@
+﻿@model IEnumerable<BorrowTransaction>
+
+<h2>All Transactions</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th>Book</th>
+            <th>Borrowed On</th>
+            <th>Returned On</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in Model)
+        {
+            <tr>
+                <td>@t.Member?.FullName</td>
+                <td>@t.Book?.Title</td>
+                <td>@t.DateBorrowed.ToShortDateString()</td>
+                <td>@(t.DateReturned?.ToShortDateString() ?? "Not Returned")</td>
+                <td>@(t.DateReturned == null ? "Borrowed" : "Returned")</td>
+            </tr>
+        }
+    </tbody>
+</table>

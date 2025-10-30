@@ -1,20 +1,29 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using LibraryManagementSystem.Interfaces;
+using LibraryManagementSystem.Models;
+using System;
 
+[Authorize]
 public class TransactionController : Controller
 {
     private readonly ITransactionService _transactionService;
     private readonly IMemberService _memberService;
     private readonly IBookService _bookService;
 
-    public TransactionController(ITransactionService transactionService, IMemberService memberService, IBookService bookService)
+    public TransactionController(
+        ITransactionService transactionService,
+        IMemberService memberService,
+        IBookService bookService)
     {
         _transactionService = transactionService;
         _memberService = memberService;
         _bookService = bookService;
     }
 
+    // Admin: View all transactions
+    [Authorize(Roles = "Admin")]
     public IActionResult Index()
     {
         var transactions = _transactionService.GetAllTransactions();
@@ -26,7 +35,8 @@ public class TransactionController : Controller
         return View(transactions);
     }
 
-    [Authorize]
+    // Member: Borrow a book
+    [Authorize(Roles = "Member")]
     public IActionResult Borrow(int bookId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -34,16 +44,23 @@ public class TransactionController : Controller
         if (member == null) return RedirectToAction("Create", "Member");
 
         var book = _bookService.GetBookById(bookId);
-        if (book == null || !book.IsAvailable) return NotFound("Book not available.");
+        if (book == null || book.AvailableCopies < 1)
+        {
+            TempData["Debug"] = $"AvailableCopies: {book?.AvailableCopies}, TotalCopies: {book?.TotalCopies}";
+
+            return RedirectToAction("Index", "Book");
+        }
 
         _transactionService.RecordBorrow(member.Id, bookId);
-        book.IsAvailable = false;
+        book.AvailableCopies--; // ✅ Decrease available copies
         _bookService.UpdateBook(book);
 
-        return RedirectToAction("Index");
+        TempData["Success"] = "Book borrowed successfully.";
+        return RedirectToAction("MyBorrowedBooks");
     }
 
-    [Authorize]
+    // Member: Return a book
+    [Authorize(Roles = "Member")]
     public IActionResult Return(int transactionId)
     {
         var transaction = _transactionService.GetById(transactionId);
@@ -55,14 +72,16 @@ public class TransactionController : Controller
         var book = _bookService.GetBookById(transaction.BookId);
         if (book != null)
         {
-            book.IsAvailable = true;
+            book.AvailableCopies++; // ✅ Increase available copies
             _bookService.UpdateBook(book);
         }
 
-        return RedirectToAction("Index");
+        TempData["Success"] = "Book returned successfully.";
+        return RedirectToAction("MyBorrowedBooks");
     }
 
-    [Authorize]
+    // Member: View borrowed books
+    [Authorize(Roles = "Member")]
     public IActionResult MyBorrowedBooks()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

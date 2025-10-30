@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Models;
+using System;
 
 [Authorize]
 public class BookController : Controller
@@ -21,7 +22,6 @@ public class BookController : Controller
         _userManager = userManager;
     }
 
-    // Shared: Members and Admins can view books
     [Authorize(Roles = "Member,Admin")]
     public IActionResult Index()
     {
@@ -29,10 +29,16 @@ public class BookController : Controller
         return View(books);
     }
 
-    // Member: Submit borrow request
     [Authorize(Roles = "Member")]
     public IActionResult RequestBorrow(int bookId)
     {
+        var book = _bookService.GetBookById(bookId);
+        if (book == null || book.AvailableCopies < 1)
+        {
+            TempData["Error"] = "Book is not available.";
+            return RedirectToAction("Index");
+        }
+
         var request = new BorrowRequest
         {
             MemberId = _userManager.GetUserId(User),
@@ -40,11 +46,12 @@ public class BookController : Controller
             RequestDate = DateTime.Now,
             IsApproved = false
         };
+
         _borrowService.SubmitRequest(request);
+        TempData["Success"] = "Borrow request submitted.";
         return RedirectToAction("MyBorrowedBooks", "Transaction");
     }
 
-    // Admin only: Add book
     [Authorize(Roles = "Admin")]
     public IActionResult Create() => View();
 
@@ -55,16 +62,17 @@ public class BookController : Controller
         if (ModelState.IsValid)
         {
             _bookService.AddBook(book);
+            TempData["Success"] = "Book added.";
             return RedirectToAction("Index");
         }
         return View(book);
     }
 
-    // Admin only: Edit book
     [Authorize(Roles = "Admin")]
     public IActionResult Edit(int id)
     {
         var book = _bookService.GetBookById(id);
+        if (book == null) return NotFound();
         return View(book);
     }
 
@@ -75,16 +83,17 @@ public class BookController : Controller
         if (ModelState.IsValid)
         {
             _bookService.UpdateBook(book);
+            TempData["Success"] = "Book updated.";
             return RedirectToAction("Index");
         }
         return View(book);
     }
 
-    // Admin only: Delete book
     [Authorize(Roles = "Admin")]
     public IActionResult Delete(int id)
     {
         var book = _bookService.GetBookById(id);
+        if (book == null) return NotFound();
         return View(book);
     }
 
@@ -93,6 +102,7 @@ public class BookController : Controller
     public IActionResult Delete(Book book)
     {
         _bookService.RemoveBook(book.Id);
+        TempData["Success"] = "Book deleted.";
         return RedirectToAction("Index");
     }
 }
