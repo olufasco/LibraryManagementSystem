@@ -1,11 +1,14 @@
-﻿@model IEnumerable<Book>
+﻿<h2 class="mb-4">📚 Available Books</h2>
 
-<h2>Books</h2>
-<a class="btn btn-primary" href="/Book/Create">Add Book</a>
-
-<table class="table">
-    <thead>
-        <tr><th>Title</th><th>Author</th><th>Status</th><th>Actions</th></tr>
+<table class="table table-striped table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Total Copies</th>
+            <th>Available</th>
+            <th>Actions</th>
+        </tr>
     </thead>
     <tbody>
         @foreach (var book in Model)
@@ -13,14 +16,19 @@
             <tr>
                 <td>@book.Title</td>
                 <td>@book.Author</td>
-                <td>@(book.IsAvailable ? "Available" : "Borrowed")</td>
+                <td>@book.TotalCopies</td>
                 <td>
-                    <a href="/Book/Edit/@book.Id">Edit</a> |
-                    <a href="/Book/Delete/@book.Id">Delete</a> |
-                    @if (book.IsAvailable)
+                    @if (book.AvailableCopies > 0)
                     {
-                        <a href="/Transaction/Borrow/@book.Id">Borrow</a>
+                        <span class="badge bg-success">Available</span>
                     }
+                    else
+                    {
+                        <span class="badge bg-danger">Out</span>
+                    }
+                </td>
+                <td>
+                    <a href="@Url.Action("Borrow", "Transaction", new { bookId = book.Id })" class="btn btn-sm btn-primary">Borrow</a>
                 </td>
             </tr>
         }
